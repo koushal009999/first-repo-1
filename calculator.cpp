@@ -3,516 +3,336 @@
 #include <iomanip>
 #include <cmath>
 #include <vector>
+#include <algorithm>
+#include <numeric>
 #include <string>
-#include <sstream>
 #include <limits>
 
 using namespace std;
 
-const double PI = 3.14159265358979323846;
-
+const double PI = acos(-1.0);
 vector<string> history;
-double memoryValue = 0.0;
-bool memorySet = false;
 
-// Convert degrees to radians
-double toRadians(double degrees) {
-    return degrees * PI / 180.0;
-}
-
-// Format numbers without unnecessary trailing zeros
-string formatNumber(double value) {
-    ostringstream out;
-    out << setprecision(12) << defaultfloat << value;
-    return out.str();
-}
-
-// Safely read a number
-double getNumber(const string& message) {
-    double number;
+double inputNumber(const string& message) {
+    double value;
 
     while (true) {
         cout << message;
 
-        if (cin >> number && isfinite(number)) {
-            return number;
-        }
+        if (cin >> value && isfinite(value))
+            return value;
 
-        cout << "Invalid input! Enter a valid finite number.\n";
+        cout << "Invalid number. Try again.\n";
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 }
 
-// Safely read an integer
-int getChoice() {
-    int choice;
+int inputInt(const string& message, int low, int high) {
+    int value;
 
     while (true) {
-        cout << "\nEnter your choice: ";
+        cout << message;
 
-        if (cin >> choice) {
-            return choice;
-        }
+        if (cin >> value && value >= low && value <= high)
+            return value;
 
-        cout << "Invalid input! Enter an integer.\n";
+        cout << "Enter an integer from " << low << " to "
+             << high << ".\n";
+
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 }
 
-// Display result and save calculation
-void recordResult(const string& expression, double result) {
-    cout << "\n-----------------------------------------\n";
-    cout << "Expression : " << expression << '\n';
-    cout << "Result     : " << formatNumber(result) << '\n';
-    cout << "-----------------------------------------\n";
-
-    history.push_back(expression + " = " + formatNumber(result));
-}
-
-// Check result before recording
-void finishCalculation(const string& expression, double result) {
+void showResult(const string& expression, double result) {
     if (!isfinite(result)) {
         cout << "Error: Result is outside the supported range.\n";
         return;
     }
 
-    recordResult(expression, result);
+    cout << "\nResult: " << setprecision(12) << result << '\n';
+    history.push_back(expression + " = " + to_string(result));
 }
 
-// Show calculation history
-void showHistory() {
-    cout << "\n========== CALCULATION HISTORY ==========\n";
+void arithmetic() {
+    cout << "\n--- ARITHMETIC ---\n";
+    cout << "1. Addition\n2. Subtraction\n3. Multiplication\n";
+    cout << "4. Division\n5. Power\n6. Remainder\n";
 
-    if (history.empty()) {
-        cout << "No calculations recorded yet.\n";
-    } else {
-        for (size_t i = 0; i < history.size(); ++i) {
-            cout << i + 1 << ". " << history[i] << '\n';
-        }
-    }
-
-    cout << "=========================================\n";
-}
-
-// Basic arithmetic
-void basicOperations(int choice) {
-    double a = getNumber("Enter first number: ");
-    double b = getNumber("Enter second number: ");
-    double result = 0.0;
-    string expression;
+    int choice = inputInt("Choose: ", 1, 6);
+    double a = inputNumber("First number: ");
+    double b = inputNumber("Second number: ");
+    double result = 0;
+    string op;
 
     switch (choice) {
-        case 1:
-            result = a + b;
-            expression = formatNumber(a) + " + " + formatNumber(b);
-            break;
-
-        case 2:
-            result = a - b;
-            expression = formatNumber(a) + " - " + formatNumber(b);
-            break;
-
-        case 3:
-            result = a * b;
-            expression = formatNumber(a) + " * " + formatNumber(b);
-            break;
+        case 1: result = a + b; op = "+"; break;
+        case 2: result = a - b; op = "-"; break;
+        case 3: result = a * b; op = "*"; break;
 
         case 4:
-            if (b == 0.0) {
-                cout << "Error: Division by zero is not allowed.\n";
+            if (b == 0) {
+                cout << "Cannot divide by zero.\n";
                 return;
             }
             result = a / b;
-            expression = formatNumber(a) + " / " + formatNumber(b);
+            op = "/";
             break;
 
         case 5:
-            result = fmod(a, b);
-            if (b == 0.0) {
-                cout << "Error: Modulus by zero is not allowed.\n";
-                return;
-            }
-            expression = formatNumber(a) + " mod " + formatNumber(b);
+            result = pow(a, b);
+            op = "^";
             break;
 
         case 6:
-            result = pow(a, b);
-            expression = formatNumber(a) + " ^ " + formatNumber(b);
+            if (b == 0) {
+                cout << "Cannot calculate remainder with zero.\n";
+                return;
+            }
+            result = fmod(a, b);
+            op = "mod";
             break;
-
-        default:
-            return;
     }
 
-    finishCalculation(expression, result);
+    showResult(to_string(a) + " " + op + " " + to_string(b), result);
 }
 
-// Powers and roots
-void powerRootOperations(int choice) {
-    double a, b, result;
-    string expression;
+void scientific() {
+    cout << "\n--- SCIENTIFIC FUNCTIONS ---\n";
+    cout << "1. Square root\n2. Cube root\n3. Square\n";
+    cout << "4. Cube\n5. Absolute value\n6. Factorial\n";
+    cout << "7. Sine (degrees)\n8. Cosine (degrees)\n";
+    cout << "9. Tangent (degrees)\n10. Natural logarithm\n";
+    cout << "11. Log base 10\n12. Exponential (e^x)\n";
 
-    switch (choice) {
-        case 7:
-            a = getNumber("Enter number: ");
-            result = sqrt(a);
-
-            if (a < 0) {
-                cout << "Error: Real square root requires a non-negative number.\n";
-                return;
-            }
-
-            expression = "sqrt(" + formatNumber(a) + ")";
-            break;
-
-        case 8:
-            a = getNumber("Enter number: ");
-            result = cbrt(a);
-            expression = "cbrt(" + formatNumber(a) + ")";
-            break;
-
-        case 9:
-            a = getNumber("Enter number: ");
-            result = a * a;
-            expression = formatNumber(a) + "^2";
-            break;
-
-        case 10:
-            a = getNumber("Enter number: ");
-            result = a * a * a;
-            expression = formatNumber(a) + "^3";
-            break;
-
-        case 11:
-            a = getNumber("Enter number: ");
-
-            if (a == 0.0) {
-                cout << "Error: Zero has no reciprocal.\n";
-                return;
-            }
-
-            result = 1.0 / a;
-            expression = "1 / " + formatNumber(a);
-            break;
-
-        case 12:
-            a = getNumber("Enter number: ");
-            b = getNumber("Enter root index: ");
-
-            if (b == 0.0) {
-                cout << "Error: Root index cannot be zero.\n";
-                return;
-            }
-
-            if (a < 0.0) {
-                if (b != trunc(b) ||
-                    fmod(fabs(b), 2.0) != 1.0) {
-                    cout << "Error: Negative numbers require an odd integer root index.\n";
-                    return;
-                }
-
-                result = -pow(-a, 1.0 / b);
-            } else {
-                result = pow(a, 1.0 / b);
-            }
-
-            expression = formatNumber(b) + "th root of "
-                       + formatNumber(a);
-            break;
-
-        default:
-            return;
-    }
-
-    finishCalculation(expression, result);
-}
-
-// Trigonometric operations: angles in degrees
-void trigonometry(int choice) {
-    double angle = getNumber("Enter angle in degrees: ");
-    double radians = toRadians(angle);
-    double result;
-    string expression;
-
-    switch (choice) {
-        case 13:
-            result = sin(radians);
-            expression = "sin(" + formatNumber(angle) + " deg)";
-            break;
-
-        case 14:
-            result = cos(radians);
-            expression = "cos(" + formatNumber(angle) + " deg)";
-            break;
-
-        case 15:
-            if (fabs(cos(radians)) < 1e-12) {
-                cout << "Error: Tangent is undefined at this angle.\n";
-                return;
-            }
-            result = tan(radians);
-            expression = "tan(" + formatNumber(angle) + " deg)";
-            break;
-
-        case 16:
-            if (angle < -1.0 || angle > 1.0) {
-                cout << "Error: asin input must be between -1 and 1.\n";
-                return;
-            }
-            result = asin(angle) * 180.0 / PI;
-            expression = "asin(" + formatNumber(angle) + ")";
-            break;
-
-        case 17:
-            if (angle < -1.0 || angle > 1.0) {
-                cout << "Error: acos input must be between -1 and 1.\n";
-                return;
-            }
-            result = acos(angle) * 180.0 / PI;
-            expression = "acos(" + formatNumber(angle) + ")";
-            break;
-
-        case 18:
-            result = atan(angle) * 180.0 / PI;
-            expression = "atan(" + formatNumber(angle) + ")";
-            break;
-
-        default:
-            return;
-    }
-
-    finishCalculation(expression, result);
-}
-
-// Logarithms and exponential
-void logarithmOperations(int choice) {
-    double a = getNumber("Enter number: ");
-    double result;
-    string expression;
-
-    switch (choice) {
-        case 19:
-            if (a <= 0.0) {
-                cout << "Error: ln requires a positive number.\n";
-                return;
-            }
-            result = log(a);
-            expression = "ln(" + formatNumber(a) + ")";
-            break;
-
-        case 20:
-            if (a <= 0.0) {
-                cout << "Error: Log requires a positive number.\n";
-                return;
-            }
-            result = log10(a);
-            expression = "log10(" + formatNumber(a) + ")";
-            break;
-
-        case 21:
-            result = exp(a);
-            expression = "e^" + formatNumber(a);
-            break;
-
-        default:
-            return;
-    }
-
-    finishCalculation(expression, result);
-}
-
-// Other mathematical functions
-void otherOperations(int choice) {
-    double a = getNumber("Enter number: ");
-    double result;
-    string expression;
-
-    switch (choice) {
-        case 22:
-            result = fabs(a);
-            expression = "abs(" + formatNumber(a) + ")";
-            break;
-
-        case 23:
-            if (a < 0.0 || a != trunc(a) || a > 170.0) {
-                cout << "Error: Enter a whole number from 0 to 170.\n";
-                return;
-            }
-
-            result = 1.0;
-
-            for (int i = 2; i <= static_cast<int>(a); ++i) {
-                result *= i;
-            }
-
-            expression = formatNumber(a) + "!";
-            break;
-
-        case 24:
-            result = round(a);
-            expression = "round(" + formatNumber(a) + ")";
-            break;
-
-        case 25:
-            result = floor(a);
-            expression = "floor(" + formatNumber(a) + ")";
-            break;
-
-        case 26:
-            result = ceil(a);
-            expression = "ceil(" + formatNumber(a) + ")";
-            break;
-
-        case 27:
-            result = a / 100.0;
-            expression = formatNumber(a) + "%";
-            break;
-
-        default:
-            return;
-    }
-
-    finishCalculation(expression, result);
-}
-
-// Memory menu
-void memoryOperations() {
-    cout << "\n========== MEMORY ==========\n";
-    cout << "1. Store a number in memory\n";
-    cout << "2. Recall memory\n";
-    cout << "3. Add a number to memory\n";
-    cout << "4. Clear memory\n";
-    cout << "0. Back to main menu\n";
-
-    int choice = getChoice();
+    int choice = inputInt("Choose: ", 1, 12);
+    double x = inputNumber("Enter number: ");
+    double result = 0;
+    string name;
 
     switch (choice) {
         case 1:
-            memoryValue = getNumber("Enter value to store: ");
-            memorySet = true;
-            cout << "Value stored in memory.\n";
-            break;
+            if (x < 0) {
+                cout << "Square root requires a non-negative number.\n";
+                return;
+            }
+            result = sqrt(x); name = "sqrt"; break;
 
         case 2:
-            if (memorySet) {
-                cout << "Memory: " << formatNumber(memoryValue) << '\n';
-            } else {
-                cout << "Memory is empty.\n";
+            result = cbrt(x); name = "cbrt"; break;
+
+        case 3:
+            result = x * x; name = "square"; break;
+
+        case 4:
+            result = x * x * x; name = "cube"; break;
+
+        case 5:
+            result = fabs(x); name = "abs"; break;
+
+        case 6: {
+            if (x < 0 || x != trunc(x) || x > 170) {
+                cout << "Factorial requires an integer from 0 to 170.\n";
+                return;
             }
-            break;
 
-        case 3: {
-            double value = getNumber("Enter value to add: ");
-            double updatedValue = memoryValue + value;
+            result = 1;
+            for (int i = 2; i <= static_cast<int>(x); ++i)
+                result *= i;
 
-            if (!isfinite(updatedValue)) {
-                cout << "Error: Memory result is outside the supported range.\n";
-                break;
-            }
-
-            memoryValue = updatedValue;
-            memorySet = true;
-            cout << "Updated memory: " << formatNumber(memoryValue) << '\n';
+            name = "factorial";
             break;
         }
 
-        case 4:
-            memoryValue = 0.0;
-            memorySet = false;
-            cout << "Memory cleared.\n";
-            break;
+        case 7:
+            result = sin(x * PI / 180.0); name = "sin"; break;
 
-        case 0:
-            break;
+        case 8:
+            result = cos(x * PI / 180.0); name = "cos"; break;
 
-        default:
-            cout << "Invalid memory option.\n";
+        case 9:
+            if (fabs(cos(x * PI / 180.0)) < 1e-12) {
+                cout << "Tangent is undefined at this angle.\n";
+                return;
+            }
+            result = tan(x * PI / 180.0); name = "tan"; break;
+
+        case 10:
+            if (x <= 0) {
+                cout << "Natural logarithm requires x > 0.\n";
+                return;
+            }
+            result = log(x); name = "ln"; break;
+
+        case 11:
+            if (x <= 0) {
+                cout << "Logarithm requires x > 0.\n";
+                return;
+            }
+            result = log10(x); name = "log10"; break;
+
+        case 12:
+            result = exp(x); name = "exp"; break;
     }
+
+    showResult(name + "(" + to_string(x) + ")", result);
 }
 
-// Main menu
-void showMenu() {
-    cout << "\n";
-    cout << "============================================\n";
-    cout << "       ADVANCED SCIENTIFIC CALCULATOR\n";
-    cout << "============================================\n";
-    cout << " BASIC OPERATIONS\n";
-    cout << " 1. Addition             2. Subtraction\n";
-    cout << " 3. Multiplication       4. Division\n";
-    cout << " 5. Modulus              6. Power (x^y)\n";
-    cout << "--------------------------------------------\n";
-    cout << " POWERS AND ROOTS\n";
-    cout << " 7. Square Root          8. Cube Root\n";
-    cout << " 9. Square              10. Cube\n";
-    cout << "11. Reciprocal          12. Nth Root\n";
-    cout << "--------------------------------------------\n";
-    cout << " TRIGONOMETRY (DEGREES)\n";
-    cout << "13. Sine                14. Cosine\n";
-    cout << "15. Tangent             16. Inverse Sine\n";
-    cout << "17. Inverse Cosine      18. Inverse Tangent\n";
-    cout << "--------------------------------------------\n";
-    cout << " LOGARITHMS\n";
-    cout << "19. Natural Log (ln)    20. Log Base 10\n";
-    cout << "21. Exponential (e^x)\n";
-    cout << "--------------------------------------------\n";
-    cout << " OTHER FUNCTIONS\n";
-    cout << "22. Absolute Value      23. Factorial\n";
-    cout << "24. Round               25. Floor\n";
-    cout << "26. Ceiling             27. Percentage\n";
-    cout << "--------------------------------------------\n";
-    cout << "28. Show History        29. Clear History\n";
-    cout << "30. Memory Functions\n";
-    cout << " 0. Exit\n";
-    cout << "============================================\n";
+void percentage() {
+    double total = inputNumber("Enter total value: ");
+    double percent = inputNumber("Enter percentage: ");
+
+    showResult(to_string(percent) + "% of " + to_string(total),
+               total * percent / 100.0);
+}
+
+void statistics() {
+    int n = inputInt("How many numbers (1-100)? ", 1, 100);
+    vector<double> values;
+
+    for (int i = 0; i < n; ++i)
+        values.push_back(inputNumber("Enter number: "));
+
+    double sum = accumulate(values.begin(), values.end(), 0.0);
+    double mean = sum / n;
+
+    vector<double> sorted = values;
+    sort(sorted.begin(), sorted.end());
+
+    double median;
+    if (n % 2 == 1)
+        median = sorted[n / 2];
+    else
+        median = sorted[n / 2 - 1] / 2.0 + sorted[n / 2] / 2.0;
+
+    double variance = 0;
+    for (double x : values)
+        variance += (x - mean) * (x - mean);
+    variance /= n;
+
+    cout << "\n--- STATISTICS ---\n";
+    cout << "Count: " << n << '\n';
+    cout << "Sum: " << sum << '\n';
+    cout << "Mean: " << mean << '\n';
+    cout << "Median: " << median << '\n';
+    cout << "Minimum: " << sorted.front() << '\n';
+    cout << "Maximum: " << sorted.back() << '\n';
+    cout << "Population variance: " << variance << '\n';
+    cout << "Population standard deviation: "
+         << sqrt(variance) << '\n';
+
+    history.push_back("Statistics calculated for " +
+                      to_string(n) + " values");
+}
+
+void solveEquation() {
+    cout << "\nEquation format: ax + b = 0\n";
+
+    double a = inputNumber("Enter coefficient a: ");
+    double b = inputNumber("Enter coefficient b: ");
+
+    if (a == 0) {
+        if (b == 0)
+            cout << "Infinitely many solutions.\n";
+        else
+            cout << "No solution.\n";
+        return;
+    }
+
+    double x = -b / a;
+    showResult("Solve " + to_string(a) + "x + " +
+               to_string(b) + " = 0", x);
+}
+
+void convertBase() {
+    long long number;
+    cout << "Enter an integer: ";
+
+    if (!(cin >> number)) {
+        cout << "Invalid integer.\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return;
+    }
+
+    unsigned long long magnitude;
+    if (number < 0)
+        magnitude = 0ULL - static_cast<unsigned long long>(number);
+    else
+        magnitude = static_cast<unsigned long long>(number);
+
+    auto convert = [](unsigned long long n, int base) {
+        const string digits = "0123456789ABCDEF";
+        string output;
+
+        do {
+            output.push_back(digits[n % base]);
+            n /= base;
+        } while (n > 0);
+
+        reverse(output.begin(), output.end());
+        return output;
+    };
+
+    string sign = number < 0 ? "-" : "";
+
+    cout << "Binary: " << sign << convert(magnitude, 2) << '\n';
+    cout << "Octal: " << sign << convert(magnitude, 8) << '\n';
+    cout << "Hexadecimal: " << sign << convert(magnitude, 16) << '\n';
+
+    history.push_back("Converted integer " + to_string(number) +
+                      " to binary, octal and hexadecimal");
+}
+
+void showHistory() {
+    cout << "\n--- CALCULATION HISTORY ---\n";
+
+    if (history.empty()) {
+        cout << "No calculations yet.\n";
+        return;
+    }
+
+    for (size_t i = 0; i < history.size(); ++i)
+        cout << i + 1 << ". " << history[i] << '\n';
 }
 
 int main() {
-    cout << setprecision(12);
-
-    cout << "\nWelcome to the Advanced Scientific Calculator!\n";
+    cout << fixed << setprecision(6);
 
     while (true) {
-        showMenu();
-        int choice = getChoice();
+        cout << "\n====================================\n";
+        cout << "       CALCPRO 2.0 - C++\n";
+        cout << "====================================\n";
+        cout << "1. Arithmetic operations\n";
+        cout << "2. Scientific functions\n";
+        cout << "3. Percentage calculator\n";
+        cout << "4. Statistics calculator\n";
+        cout << "5. Linear equation solver\n";
+        cout << "6. Number system converter\n";
+        cout << "7. View history\n";
+        cout << "8. Clear history\n";
+        cout << "0. Exit\n";
 
-        if (choice == 0) {
-            cout << "\nThank you for using the calculator!\n";
-            cout << "Keep learning C++ and building projects!\n";
-            break;
-        }
+        int choice = inputInt("Select option: ", 0, 8);
 
-        if (choice >= 1 && choice <= 6) {
-            basicOperations(choice);
-        } else if (choice >= 7 && choice <= 12) {
-            powerRootOperations(choice);
-        } else if (choice >= 13 && choice <= 18) {
-            trigonometry(choice);
-        } else if (choice >= 19 && choice <= 21) {
-            logarithmOperations(choice);
-        } else if (choice >= 22 && choice <= 27) {
-            otherOperations(choice);
-        } else {
-            switch (choice) {
-                case 28:
-                    showHistory();
-                    break;
+        switch (choice) {
+            case 1: arithmetic(); break;
+            case 2: scientific(); break;
+            case 3: percentage(); break;
+            case 4: statistics(); break;
+            case 5: solveEquation(); break;
+            case 6: convertBase(); break;
+            case 7: showHistory(); break;
 
-                case 29:
-                    history.clear();
-                    cout << "Calculation history cleared.\n";
-                    break;
+            case 8:
+                history.clear();
+                cout << "History cleared.\n";
+                break;
 
-                case 30:
-                    memoryOperations();
-                    break;
-
-                default:
-                    cout << "Invalid choice! Select 0 to 30.\n";
-            }
+            case 0:
+                cout << "Thanks for using CalcPro 2.0!\n";
+                return 0;
         }
     }
-
-    return 0;
 }
