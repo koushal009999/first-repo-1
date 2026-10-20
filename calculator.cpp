@@ -2,25 +2,24 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <vector>
-#include <algorithm>
-#include <numeric>
 #include <string>
+#include <sstream>
+#include <bitset>
 #include <limits>
+#include <cstdint>
 
 using namespace std;
 
 const double PI = acos(-1.0);
-vector<string> history;
 
-double inputNumber(const string& message) {
-    double value;
+double readNumber(const string& prompt) {
+    double x;
 
     while (true) {
-        cout << message;
+        cout << prompt;
 
-        if (cin >> value && isfinite(value))
-            return value;
+        if (cin >> x && isfinite(x))
+            return x;
 
         cout << "Invalid number. Try again.\n";
         cin.clear();
@@ -28,310 +27,301 @@ double inputNumber(const string& message) {
     }
 }
 
-int inputInt(const string& message, int low, int high) {
-    int value;
+int readChoice(int low, int high) {
+    int choice;
 
     while (true) {
-        cout << message;
+        cout << "Select option: ";
 
-        if (cin >> value && value >= low && value <= high)
-            return value;
+        if (cin >> choice && choice >= low && choice <= high)
+            return choice;
 
-        cout << "Enter an integer from " << low << " to "
-             << high << ".\n";
-
+        cout << "Enter a number from " << low << " to " << high << ".\n";
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 }
 
-void showResult(const string& expression, double result) {
+void showResult(const string& label, double result) {
     if (!isfinite(result)) {
-        cout << "Error: Result is outside the supported range.\n";
+        cout << "\nError: Result is outside the supported range.\n";
         return;
     }
 
-    cout << "\nResult: " << setprecision(12) << result << '\n';
-    history.push_back(expression + " = " + to_string(result));
+    cout << "\n------------------------------------\n";
+    cout << label << " = " << setprecision(12) << result << '\n';
+    cout << "------------------------------------\n";
 }
 
-void arithmetic() {
-    cout << "\n--- ARITHMETIC ---\n";
-    cout << "1. Addition\n2. Subtraction\n3. Multiplication\n";
-    cout << "4. Division\n5. Power\n6. Remainder\n";
+void arithmeticMode() {
+    cout << "\n--- ARITHMETIC MODE ---\n";
+    cout << "1. Add\n2. Subtract\n3. Multiply\n";
+    cout << "4. Divide\n5. Power\n6. Remainder\n";
 
-    int choice = inputInt("Choose: ", 1, 6);
-    double a = inputNumber("First number: ");
-    double b = inputNumber("Second number: ");
+    int op = readChoice(1, 6);
+    double a = readNumber("First number: ");
+    double b = readNumber("Second number: ");
     double result = 0;
-    string op;
+    string symbol;
 
-    switch (choice) {
-        case 1: result = a + b; op = "+"; break;
-        case 2: result = a - b; op = "-"; break;
-        case 3: result = a * b; op = "*"; break;
+    switch (op) {
+        case 1: result = a + b; symbol = "+"; break;
+        case 2: result = a - b; symbol = "-"; break;
+        case 3: result = a * b; symbol = "*"; break;
 
         case 4:
             if (b == 0) {
-                cout << "Cannot divide by zero.\n";
+                cout << "Error: Cannot divide by zero.\n";
                 return;
             }
             result = a / b;
-            op = "/";
+            symbol = "/";
             break;
 
         case 5:
             result = pow(a, b);
-            op = "^";
+            symbol = "^";
             break;
 
         case 6:
             if (b == 0) {
-                cout << "Cannot calculate remainder with zero.\n";
+                cout << "Error: Remainder by zero is undefined.\n";
                 return;
             }
             result = fmod(a, b);
-            op = "mod";
+            symbol = "mod";
             break;
     }
 
-    showResult(to_string(a) + " " + op + " " + to_string(b), result);
+    showResult(to_string(a) + " " + symbol + " " + to_string(b), result);
 }
 
-void scientific() {
-    cout << "\n--- SCIENTIFIC FUNCTIONS ---\n";
+void scientificMode() {
+    cout << "\n--- SCIENTIFIC MODE ---\n";
     cout << "1. Square root\n2. Cube root\n3. Square\n";
-    cout << "4. Cube\n5. Absolute value\n6. Factorial\n";
-    cout << "7. Sine (degrees)\n8. Cosine (degrees)\n";
-    cout << "9. Tangent (degrees)\n10. Natural logarithm\n";
-    cout << "11. Log base 10\n12. Exponential (e^x)\n";
+    cout << "4. Sine (degrees)\n5. Cosine (degrees)\n";
+    cout << "6. Tangent (degrees)\n7. Natural log\n";
+    cout << "8. Log base 10\n9. Exponential e^x\n";
+    cout << "10. Absolute value\n11. Factorial\n";
+    cout << "12. Reciprocal\n";
 
-    int choice = inputInt("Choose: ", 1, 12);
-    double x = inputNumber("Enter number: ");
+    int op = readChoice(1, 12);
+    double x = readNumber("Enter value: ");
     double result = 0;
     string name;
 
-    switch (choice) {
+    switch (op) {
         case 1:
             if (x < 0) {
-                cout << "Square root requires a non-negative number.\n";
+                cout << "Error: Square root requires x >= 0.\n";
                 return;
             }
-            result = sqrt(x); name = "sqrt"; break;
+            result = sqrt(x);
+            name = "sqrt";
+            break;
 
         case 2:
-            result = cbrt(x); name = "cbrt"; break;
+            result = cbrt(x);
+            name = "cbrt";
+            break;
 
         case 3:
-            result = x * x; name = "square"; break;
+            result = x * x;
+            name = "square";
+            break;
 
         case 4:
-            result = x * x * x; name = "cube"; break;
+            result = sin(x * PI / 180.0);
+            name = "sin";
+            break;
 
         case 5:
-            result = fabs(x); name = "abs"; break;
+            result = cos(x * PI / 180.0);
+            name = "cos";
+            break;
 
-        case 6: {
-            if (x < 0 || x != trunc(x) || x > 170) {
-                cout << "Factorial requires an integer from 0 to 170.\n";
+        case 6:
+            if (fabs(cos(x * PI / 180.0)) < 1e-12) {
+                cout << "Error: Tangent is undefined at this angle.\n";
                 return;
             }
+            result = tan(x * PI / 180.0);
+            name = "tan";
+            break;
 
+        case 7:
+            if (x <= 0) {
+                cout << "Error: ln requires a positive value.\n";
+                return;
+            }
+            result = log(x);
+            name = "ln";
+            break;
+
+        case 8:
+            if (x <= 0) {
+                cout << "Error: log requires a positive value.\n";
+                return;
+            }
+            result = log10(x);
+            name = "log10";
+            break;
+
+        case 9:
+            result = exp(x);
+            name = "exp";
+            break;
+
+        case 10:
+            result = fabs(x);
+            name = "abs";
+            break;
+
+        case 11:
+            if (x < 0 || x != trunc(x) || x > 170) {
+                cout << "Enter an integer from 0 to 170.\n";
+                return;
+            }
             result = 1;
             for (int i = 2; i <= static_cast<int>(x); ++i)
                 result *= i;
-
             name = "factorial";
             break;
-        }
-
-        case 7:
-            result = sin(x * PI / 180.0); name = "sin"; break;
-
-        case 8:
-            result = cos(x * PI / 180.0); name = "cos"; break;
-
-        case 9:
-            if (fabs(cos(x * PI / 180.0)) < 1e-12) {
-                cout << "Tangent is undefined at this angle.\n";
-                return;
-            }
-            result = tan(x * PI / 180.0); name = "tan"; break;
-
-        case 10:
-            if (x <= 0) {
-                cout << "Natural logarithm requires x > 0.\n";
-                return;
-            }
-            result = log(x); name = "ln"; break;
-
-        case 11:
-            if (x <= 0) {
-                cout << "Logarithm requires x > 0.\n";
-                return;
-            }
-            result = log10(x); name = "log10"; break;
 
         case 12:
-            result = exp(x); name = "exp"; break;
+            if (x == 0) {
+                cout << "Error: Reciprocal of zero is undefined.\n";
+                return;
+            }
+            result = 1.0 / x;
+            name = "reciprocal";
+            break;
     }
 
     showResult(name + "(" + to_string(x) + ")", result);
 }
 
-void percentage() {
-    double total = inputNumber("Enter total value: ");
-    double percent = inputNumber("Enter percentage: ");
+void programmerMode() {
+    cout << "\n--- PROGRAMMER MODE ---\n";
+    cout << "1. Decimal to binary\n";
+    cout << "2. Decimal to hexadecimal\n";
+    cout << "3. Bitwise AND\n";
+    cout << "4. Bitwise OR\n";
+    cout << "5. Bitwise XOR\n";
+    cout << "6. Left shift\n";
+    cout << "7. Right shift\n";
 
-    showResult(to_string(percent) + "% of " + to_string(total),
-               total * percent / 100.0);
-}
+    int op = readChoice(1, 7);
+    long long a, b = 0;
 
-void statistics() {
-    int n = inputInt("How many numbers (1-100)? ", 1, 100);
-    vector<double> values;
+    cout << "Enter first integer: ";
 
-    for (int i = 0; i < n; ++i)
-        values.push_back(inputNumber("Enter number: "));
-
-    double sum = accumulate(values.begin(), values.end(), 0.0);
-    double mean = sum / n;
-
-    vector<double> sorted = values;
-    sort(sorted.begin(), sorted.end());
-
-    double median;
-    if (n % 2 == 1)
-        median = sorted[n / 2];
-    else
-        median = sorted[n / 2 - 1] / 2.0 + sorted[n / 2] / 2.0;
-
-    double variance = 0;
-    for (double x : values)
-        variance += (x - mean) * (x - mean);
-    variance /= n;
-
-    cout << "\n--- STATISTICS ---\n";
-    cout << "Count: " << n << '\n';
-    cout << "Sum: " << sum << '\n';
-    cout << "Mean: " << mean << '\n';
-    cout << "Median: " << median << '\n';
-    cout << "Minimum: " << sorted.front() << '\n';
-    cout << "Maximum: " << sorted.back() << '\n';
-    cout << "Population variance: " << variance << '\n';
-    cout << "Population standard deviation: "
-         << sqrt(variance) << '\n';
-
-    history.push_back("Statistics calculated for " +
-                      to_string(n) + " values");
-}
-
-void solveEquation() {
-    cout << "\nEquation format: ax + b = 0\n";
-
-    double a = inputNumber("Enter coefficient a: ");
-    double b = inputNumber("Enter coefficient b: ");
-
-    if (a == 0) {
-        if (b == 0)
-            cout << "Infinitely many solutions.\n";
-        else
-            cout << "No solution.\n";
-        return;
-    }
-
-    double x = -b / a;
-    showResult("Solve " + to_string(a) + "x + " +
-               to_string(b) + " = 0", x);
-}
-
-void convertBase() {
-    long long number;
-    cout << "Enter an integer: ";
-
-    if (!(cin >> number)) {
+    if (!(cin >> a)) {
         cout << "Invalid integer.\n";
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         return;
     }
 
-    unsigned long long magnitude;
-    if (number < 0)
-        magnitude = 0ULL - static_cast<unsigned long long>(number);
-    else
-        magnitude = static_cast<unsigned long long>(number);
+    if (op >= 3) {
+        cout << "Enter second integer (shift amount for shifts): ";
 
-    auto convert = [](unsigned long long n, int base) {
-        const string digits = "0123456789ABCDEF";
-        string output;
+        if (!(cin >> b)) {
+            cout << "Invalid integer.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return;
+        }
+    }
 
-        do {
-            output.push_back(digits[n % base]);
-            n /= base;
-        } while (n > 0);
+    if (op <= 2) {
+        if (a < 0) {
+            cout << "Enter a non-negative integer for base conversion.\n";
+            return;
+        }
 
-        reverse(output.begin(), output.end());
-        return output;
-    };
+        unsigned long long n = static_cast<unsigned long long>(a);
 
-    string sign = number < 0 ? "-" : "";
+        if (op == 1) {
+            if (n == 0) {
+                cout << "Binary: 0\n";
+                return;
+            }
 
-    cout << "Binary: " << sign << convert(magnitude, 2) << '\n';
-    cout << "Octal: " << sign << convert(magnitude, 8) << '\n';
-    cout << "Hexadecimal: " << sign << convert(magnitude, 16) << '\n';
-
-    history.push_back("Converted integer " + to_string(number) +
-                      " to binary, octal and hexadecimal");
-}
-
-void showHistory() {
-    cout << "\n--- CALCULATION HISTORY ---\n";
-
-    if (history.empty()) {
-        cout << "No calculations yet.\n";
+            string binary;
+            while (n > 0) {
+                binary = char('0' + n % 2) + binary;
+                n /= 2;
+            }
+            cout << "Binary: " << binary << '\n';
+        } else {
+            stringstream ss;
+            ss << hex << uppercase << n;
+            cout << "Hexadecimal: 0x" << ss.str() << '\n';
+        }
         return;
     }
 
-    for (size_t i = 0; i < history.size(); ++i)
-        cout << i + 1 << ". " << history[i] << '\n';
+    if (op >= 6 && (b < 0 || b >= 64)) {
+        cout << "Shift amount must be from 0 to 63.\n";
+        return;
+    }
+
+    if (op == 7 && a < 0) {
+        cout << "Right-shifting negative integers is implementation-defined.\n";
+        return;
+    }
+
+    // Unsigned operations avoid undefined signed left-shift behavior.
+    uint64_t x = static_cast<uint64_t>(a);
+    uint64_t y = static_cast<uint64_t>(b);
+    uint64_t result = 0;
+
+    switch (op) {
+        case 3: result = x & y; break;
+        case 4: result = x | y; break;
+        case 5: result = x ^ y; break;
+        case 6: result = x << b; break;
+        case 7: result = x >> b; break;
+    }
+
+    cout << "Unsigned 64-bit result: " << result << '\n';
+    cout << "Binary: " << bitset<64>(result) << '\n';
+}
+
+void percentageMode() {
+    double total = readNumber("Enter total: ");
+    double percentage = readNumber("Enter percentage: ");
+
+    showResult(to_string(percentage) + "% of " + to_string(total),
+               total * percentage / 100.0);
 }
 
 int main() {
     cout << fixed << setprecision(6);
 
     while (true) {
-        cout << "\n====================================\n";
-        cout << "       CALCPRO 2.0 - C++\n";
-        cout << "====================================\n";
-        cout << "1. Arithmetic operations\n";
-        cout << "2. Scientific functions\n";
-        cout << "3. Percentage calculator\n";
-        cout << "4. Statistics calculator\n";
-        cout << "5. Linear equation solver\n";
-        cout << "6. Number system converter\n";
-        cout << "7. View history\n";
-        cout << "8. Clear history\n";
+        cout << "\n";
+        cout << "========================================\n";
+        cout << "          CALCPRO PRO 3.0\n";
+        cout << "       SCIENTIFIC CALCULATOR\n";
+        cout << "========================================\n";
+        cout << "1. Arithmetic calculator\n";
+        cout << "2. Scientific calculator\n";
+        cout << "3. Programmer calculator\n";
+        cout << "4. Percentage calculator\n";
         cout << "0. Exit\n";
+        cout << "========================================\n";
 
-        int choice = inputInt("Select option: ", 0, 8);
+        int choice = readChoice(0, 4);
 
         switch (choice) {
-            case 1: arithmetic(); break;
-            case 2: scientific(); break;
-            case 3: percentage(); break;
-            case 4: statistics(); break;
-            case 5: solveEquation(); break;
-            case 6: convertBase(); break;
-            case 7: showHistory(); break;
-
-            case 8:
-                history.clear();
-                cout << "History cleared.\n";
-                break;
-
+            case 1: arithmeticMode(); break;
+            case 2: scientificMode(); break;
+            case 3: programmerMode(); break;
+            case 4: percentageMode(); break;
             case 0:
-                cout << "Thanks for using CalcPro 2.0!\n";
+                cout << "Thank you for using CalcPro Pro!\n";
                 return 0;
         }
     }
